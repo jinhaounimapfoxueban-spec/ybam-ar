@@ -6,8 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "postinstall": "npx next@14.0.0 telemetry disable"
+    "lint": "next lint"
   },
   "dependencies": {
     "next": "14.0.0",
@@ -20,10 +19,7 @@
   },
   "devDependencies": {
     "eslint": "^8.56.0",
-    "eslint-config-next": "14.0.0",
-    "rimraf": "^5.0.5",
-    "glob": "^10.3.10",
-    "lru-cache": "^10.2.0"
+    "eslint-config-next": "14.0.0"
   },
   "keywords": ["ar", "mongodb", "nextjs", "camera"],
   "author": "马佛青文化委员会",
