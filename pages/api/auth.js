@@ -5,7 +5,11 @@ import bcrypt from 'bcryptjs';
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
 export function verifyToken(token) {
-  return jwt.verify(token, JWT_SECRET);
+  try {
+    return jwt.verify(token, JWT_SECRET);
+  } catch (error) {
+    throw new Error('Invalid token');
+  }
 }
 
 export default async function handler(req, res) {
@@ -39,7 +43,10 @@ export default async function handler(req, res) {
     
     // 生成 token
     const token = jwt.sign(
-      { userId: user._id, username: user.username },
+      { 
+        userId: user._id.toString(), 
+        username: user.username 
+      },
       JWT_SECRET,
       { expiresIn: '24h' }
     );
@@ -47,7 +54,7 @@ export default async function handler(req, res) {
     res.status(200).json({ 
       token, 
       user: { 
-        id: user._id, 
+        id: user._id.toString(), 
         username: user.username 
       } 
     });
