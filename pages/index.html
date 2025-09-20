@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import Head from 'next/head';
+import { useRouter } from 'next/router';
 
 export default function Home() {
   const [isCameraOpen, setIsCameraOpen] = useState(false);
@@ -10,13 +11,26 @@ export default function Home() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const videoRef = useRef(null);
   const streamRef = useRef(null);
+  const router = useRouter();
 
   const startCamera = async () => {
     try {
+      // 检查是否在安全环境中
+      const isSecure = window.location.protocol === 'https:' || window.location.hostname === 'localhost';
+      if (!isSecure) {
+        alert('摄像头功能需要在HTTPS环境或localhost中使用');
+        return;
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment' } 
+        video: { 
+          facingMode: 'environment',
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        } 
       });
       streamRef.current = stream;
       if (videoRef.current) {
@@ -37,6 +51,9 @@ export default function Home() {
               if (projects.length > 0) {
                 setCurrentProject(projects[0]);
               }
+            })
+            .catch(error => {
+              console.error('获取项目失败:', error);
             });
         } else {
           setCurrentProject(null);
@@ -62,6 +79,7 @@ export default function Home() {
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoginError('');
+    setIsLoading(true);
 
     try {
       const response = await fetch('/api/auth', {
@@ -82,11 +100,16 @@ export default function Home() {
         setShowLogin(false);
         setUsername('');
         setPassword('');
+        
+        // 跳转到管理页面
+        router.push('/admin');
       } else {
         setLoginError(data.message || '登录失败');
       }
     } catch (error) {
       setLoginError('网络错误，请稍后重试');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -132,7 +155,7 @@ export default function Home() {
         <div className="auth-buttons">
           {isLoggedIn ? (
             <>
-              <button className="btn btn-primary" onClick={() => window.location.href = '/admin'}>
+              <button className="btn btn-primary" onClick={() => router.push('/admin')}>
                 <i className="fas fa-cog"></i> 管理面板
               </button>
               <button className="btn btn-secondary" onClick={handleLogout}>
@@ -163,6 +186,9 @@ export default function Home() {
               <div className="camera-placeholder">
                 <i className="fas fa-camera"></i>
                 <p>点击"开启相机"按钮开始扫描</p>
+                <div className="camera-permission-help">
+                  <p><small>需要授予摄像头权限才能使用此功能</small></p>
+                </div>
               </div>
             ) : (
               <>
@@ -235,6 +261,7 @@ export default function Home() {
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="输入用户名"
                   required
+                  disabled={isLoading}
                 />
               </div>
               
@@ -247,6 +274,7 @@ export default function Home() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="输入密码"
                   required
+                  disabled={isLoading}
                 />
               </div>
               
@@ -256,15 +284,27 @@ export default function Home() {
                 </div>
               )}
               
-              <button type="submit" className="btn btn-primary full-width">
-                <i className="fas fa-sign-in-alt"></i> 登入
+              <button 
+                type="submit" 
+                className="btn btn-primary full-width"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <i className="fas fa-spinner fa-spin"></i> 登录中...
+                  </>
+                ) : (
+                  <>
+                    <i className="fas fa-sign-in-alt"></i> 登入
+                  </>
+                )}
               </button>
             </form>
             
             <div className="login-help">
-              <p>默认管理员账号:</p>
-              <p>用户名: <strong>admin2025</strong></p>
-              <p>密码: <strong>Tjh244466666</strong></p>
+              <p><strong>默认管理员账号:</strong></p>
+              <p>用户名: <code>admin2025</code></p>
+              <p>密码: <code>Tjh244466666</code></p>
             </div>
           </div>
         </div>
@@ -324,6 +364,14 @@ export default function Home() {
           cursor: pointer;
           font-weight: 600;
           transition: all 0.3s ease;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        
+        .btn:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
         }
         
         .btn-primary {
@@ -331,7 +379,7 @@ export default function Home() {
           color: white;
         }
         
-        .btn-primary:hover {
+        .btn-primary:hover:not(:disabled) {
           background-color: #3f43a1;
           transform: translateY(-2px);
         }
@@ -342,7 +390,7 @@ export default function Home() {
           color: #4e54c8;
         }
         
-        .btn-secondary:hover {
+        .btn-secondary:hover:not(:disabled) {
           background-color: rgba(78, 84, 200, 0.1);
         }
         
@@ -410,6 +458,12 @@ export default function Home() {
         .camera-placeholder p {
           margin-top: 20px;
           font-size: 1rem;
+        }
+        
+        .camera-permission-help {
+          margin-top: 15px;
+          font-size: 0.9rem;
+          color: #999;
         }
         
         .camera-feed {
@@ -546,6 +600,7 @@ export default function Home() {
           color: #fdbb2d;
           font-size: 1.5rem;
           cursor: pointer;
+          padding: 5px;
         }
         
         .form-group {
@@ -569,6 +624,11 @@ export default function Home() {
           font-size: 1rem;
         }
         
+        .form-group input:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+        
         .error-message {
           background-color: rgba(220, 53, 69, 0.2);
           color: #ff6b6b;
@@ -576,6 +636,9 @@ export default function Home() {
           border-radius: 5px;
           margin-bottom: 20px;
           border-left: 4px solid #dc3545;
+          display: flex;
+          align-items: center;
+          gap: 8px;
         }
         
         .login-help {
@@ -588,6 +651,13 @@ export default function Home() {
         
         .login-help p {
           margin: 5px 0;
+        }
+        
+        .login-help code {
+          background-color: rgba(0, 0, 0, 0.3);
+          padding: 2px 6px;
+          border-radius: 4px;
+          font-family: monospace;
         }
         
         footer {
@@ -619,6 +689,11 @@ export default function Home() {
           .auth-buttons {
             width: 100%;
             justify-content: center;
+            flex-wrap: wrap;
+          }
+          
+          .logo {
+            font-size: 1.4rem;
           }
         }
       `}</style>
