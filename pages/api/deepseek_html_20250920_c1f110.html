@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>马佛青文化委员会AR项目管理系统</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            min-height: 100vh;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        header {
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo i {
+            margin-right: 10px;
+            color: #fdbb2d;
+        }
+        
+        .auth-buttons {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background-color: #4e54c8;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #3f43a1;
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background-color: transparent;
+            border: 2px solid #4e54c8;
+            color: #4e54c8;
+        }
+        
+        .btn-secondary:hover {
+            background-color: rgba(78, 84, 200, 0.1);
+        }
+        
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background-color: #bd2130;
+            transform: translateY(-2px);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 20px;
+            flex: 1;
+        }
+        
+        .hero {
+            text-align: center;
+            padding: 3rem 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            border-radius: 20px;
+            margin-bottom: 2rem;
+        }
+        
+        .hero h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(to right, #fdbb2d, #b21f1f);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .hero p {
+            font-size: 1.2rem;
+            max-width: 800px;
+            margin: 0 auto 2rem;
+            color: #e1e1e1;
+        }
+        
+        .camera-container {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+        }
+        
+        .camera-frame {
+            width: 100%;
+            height: 500px;
+            background-color: #000;
+            border-radius: 20px;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 4px solid #4e54c8;
+        }
+        
+        .camera-placeholder {
+            font-size: 5rem;
+            color: #4e54c8;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .camera-placeholder p {
+            margin-top: 20px;
+            font-size: 1rem;
+        }
+        
+        .camera-feed {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+            transform: scaleX(-1);
+        }
+        
+        .scan-line {
+            position: absolute;
+            width: 100%;
+            height: 8px;
+            background: linear-gradient(to right, transparent, #fdbb2d, transparent);
+            top: 50%;
+            animation: scan 2s linear infinite;
+            display: none;
+            z-index: 5;
+        }
+        
+        @keyframes scan {
+            0% { top: 10%; }
+            50% { top: 90%; }
+            100% { top: 10%; }
+        }
+        
+        .camera-controls {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+            gap: 15px;
+        }
+        
+        .ar-video-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            pointer-events: none;
+        }
+        
+        .ar-video {
+            max-width: 80%;
+            max-height: 80%;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.7);
+            border: 3px solid #fdbb2d;
+            border-radius: 10px;
+            display: none;
+        }
+        
+        .admin-panel {
+            display: none;
+            background-color: rgba(0, 0, 0, 0.7);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .project-card {
+            background: linear-gradient(135deg, #3a3f7d, #1a2a6c);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease;
+            position: relative;
+        }
+        
+        .project-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .project-card h3 {
+            margin-bottom: 10px;
+            color: #fdbb2d;
+        }
+        
+        .project-image {
+            width: 100%;
+            height: 180px;
+            background-color: #2c2c2c;
+            border-radius: 10px;
+            margin: 10px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3rem;
+            color: #4e54c8;
+            overflow: hidden;
+        }
+        
+        .project-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .project-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background: linear-gradient(135deg, #1a2a6c, #3a3f7d);
+            width: 90%;
+            max-width: 600px;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.5);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .close-modal {
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #fdbb2d;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #fdbb2d;
+        }
+        
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: 2px solid #4e54c8;
+            background-color: rgba(0, 0, 0, 0.3);
+            color: white;
+        }
+        
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .preview-container {
+            width: 100%;
+            height: 200px;
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            margin: 15px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .preview-container img,
+        .preview-container video {
+            max-width: 100%;
+            max-height: 100%;
+        }
+        
+        .generate-options {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            gap: 10px;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 2rem;
+            background-color: rgba(0, 0, 0, 0.7);
+            margin-top: 2rem;
+        }
+        
+        .partner-logo {
+            text-align: center;
+            margin: 2rem 0;
+            padding: 1.5rem;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+        }
+        
+        .partner-logo img {
+            max-width: 300px;
+            max-height: 120px;
+            margin-bottom: 1rem;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .partner-logo h3 {
+            color: #fdbb2d;
+            margin-bottom: 0.5rem;
+        }
+        
+        .partner-logo p {
+            color: #e1e1e1;
+            font-size: 1rem;
+        }
+        
+        .detection-indicator {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px 15px;
+            border-radius: 50px;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            z-index: 15;
+        }
+        
+        .detection-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #ff4d4d;
+        }
+        
+        .detection-dot.active {
+            background-color: #00ff66;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        
+        .marker-outline {
+            position: absolute;
+            border: 3px solid #00ff66;
+            box-shadow: 0 0 15px #00ff66;
+            display: none;
+            z-index: 8;
+            pointer-events: none;
+        }
+        
+        .permission-help {
+            background-color: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            text-align: left;
+        }
+        
+        .permission-help h3 {
+            color: #fdbb2d;
+            margin-bottom: 10px;
+        }
+        
+        .permission-help ul {
+            text-align: left;
+            margin-left: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+            
+            .projects-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .admin-header {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .partner-logo img {
+                max-width: 250px;
+            }
+            
+            .generate-options {
+                flex-direction: column;
+            }
+            
+            .camera-frame {
+                height: 400px;
+            }
+            
+            .ar-video {
+                max-width: 90%;
+                max-height: 60%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <i class="fas fa-cube"></i>
+            <span>马佛青文化委员会AR项目管理系统</span>
+        </div>
+        <div class="auth-buttons">
+            <button class="btn btn-secondary" id="loginBtn">
+                <i class="fas fa-user-lock"></i> 登入
+            </button>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="hero">
+            <h1>AR图像识别体验平台</h1>
+            <p>使用您的手机摄像头扫描特定图像。发现隐藏在图像中的佛法！</p>
+            
+            <div class="partner-logo">
+                <img src="https://ybam-wordpress-media.s3.ap-southeast-1.amazonaws.com/wp-content/uploads/2024/05/03162711/ybamlogo2.png" alt="马来西亚佛教青年总会标志">
+                <h3>马来西亚佛教青年总会</h3>
+                <p>Young Buddhist Association of Malaysia</p>
+            </div>
+            
+            <div class="camera-container">
+                <div class="camera-frame">
+                    <div class="camera-placeholder">
+                        <i class="fas fa-camera"></i>
+                        <p id="cameraStatus">点击"开启相机"按钮开始扫描</p>
+                    </div>
+                    <video class="camera-feed" id="cameraFeed" autoplay playsinline></video>
+                    <div class="scan-line" id="scanLine"></div>
+                    <div class="detection-indicator" id="detectionIndicator">
+                        <div class="detection-dot" id="detectionDot"></div>
+                        <span>标记检测</span>
+                    </div>
+                    <div class="marker-outline" id="markerOutline"></div>
+                    <div class="ar-video-overlay" id="arVideoOverlay">
+                        <video class="ar-video" id="arVideo" loop playsinline></video>
+                    </div>
+                </div>
+                <div class="camera-controls">
+                    <button class="btn btn-primary" id="startCameraBtn">
+                        <i class="fas fa-camera"></i> 开启相机
+                    </button>
+                    <button class="btn btn-secondary" id="stopCameraBtn" style="display:none;">
+                        <i class="fas fa-stop-circle"></i> 关闭相机
+                    </button>
+                    <button class="btn btn-secondary" id="helpBtn">
+                        <i class="fas fa-question-circle"></i> 使用说明
+                    </button>
+                </div>
+                
+                <div class="permission-help" id="permissionHelp" style="display: none;">
+                    <h3>无法访问摄像头？请尝试以下方法：</h3>
+                    <ul>
+                        <li>确保您使用的是HTTPS连接（安全连接）</li>
+                        <li>检查浏览器权限设置，允许此网站使用摄像头</li>
+                        <li>如果您使用手机，请尝试使用系统浏览器（Chrome/Safari）</li>
+                        <li>确保没有其他应用程序正在使用摄像头</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="admin-panel" id="adminPanel">
+            <div class="admin-header">
+                <h2>项目管理面板</h2>
+                <button class="btn btn-primary" id="createProjectBtn">
+                    <i class="fas fa-plus"></i> 创建新项目
+                </button>
+            </div>
+
+            <h3>现有项目</h3>
+            <div class="projects-grid" id="projectsGrid">
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="loginModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>管理员登入</h2>
+                <span class="close-modal">&times;</span>
+            </div>
+            <div class="form-group">
+                <label for="username">用户名</label>
+                <input type="text" id="username" placeholder="输入用户名">
+            </div>
+            <div class="form-group">
+                <label for="password">密码</label>
+                <input type="password" id="password" placeholder="输入密码">
+            </div>
+            <button class="btn btn-primary" style="width: 100%;" id="submitLogin">
+                <i class="fas fa-sign-in-alt"></i> 登入
+            </button>
+        </div>
+    </div>
+
+    <div class="modal" id="createProjectModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>创建新项目</h2>
+                <span class="close-modal">&times;</span>
+            </div>
+            <div class="form-group">
+                <label for="projectName">项目名称</label>
+                <input type="text" id="projectName" placeholder="输入项目名称">
+            </div>
+            <div class="form-group">
+                <label for="projectImage">上传原图（手绘彩色图像）</label>
+                <input type="file" id="projectImage" accept="image/*">
+            </div>
+            
+            <div class="preview-container" id="imagePreview">
+                <p>原图预览区域</p>
+            </div>
+            
+            <div class="form-group">
+                <label for="projectVideo">上传AR视频</label>
+                <input type="file" id="projectVideo" accept="video/*">
+            </div>
+            
+            <div class="preview-container" id="videoPreview">
+                <p>视频预览区域</p>
+            </div>
+            
+            <div class="generate-options">
+                <button class="btn btn-primary" id="saveProjectBtn" style="width:100%">
+                    <i class="fas fa-save"></i> 保存项目
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="editProjectModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>编辑项目</h2>
+                <span class="close-modal">&times;</span>
+            </div>
+            <input type="hidden" id="editProjectId">
+            <div class="form-group">
+                <label for="editProjectName">项目名称</label>
+                <input type="text" id="editProjectName" placeholder="输入项目名称">
+            </div>
+            
+            <div class="preview-container" id="editImagePreview">
+                <p>原图预览</p>
+            </div>
+            
+            <div class="preview-container" id="editVideoPreview">
+                <p>视频预览</p>
+            </div>
+            
+            <div class="generate-options">
+                <button class="btn btn-danger" id="deleteProjectBtn">
+                    <i class="fas fa-trash"></i> 删除项目
+                </button>
+                <button class="btn btn-primary" id="updateProjectBtn">
+                    <i class="fas fa-save"></i> 更新项目
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="helpModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>使用说明</h2>
+                <span class="close-modal">&times;</span>
+            </div>
+            <div class="form-group">
+                <h3>如何使用AR扫描功能</h3>
+                <ol>
+                    <li>点击"开启相机"按钮允许访问您的摄像头</li>
+                    <li>将摄像头对准已注册的AR标记图像</li>
+                    <li>系统会自动识别图像并显示增强现实内容</li>
+                    <li>您可以移动设备从不同角度查看AR内容</li>
+                </ol>
+                
+                <h3>支持的图像类型</h3>
+                <ul>
+                    <li>手绘彩色图像</li>
+                    <li>高对比度图案</li>
+                    <li>包含明显特征的图片</li>
+                </ul>
+                
+                <h3>技术支持</h3>
+                <p>如遇到任何问题，请联系技术支持: 马佛青文化委员会TJH</p>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>© 2025 马佛青文化委员会AR项目管理系统 - 所有权利保留</p>
+        <p>技术支持: 马佛青文化委员会TJH</p>
+    </footer>
+
+    <script>
+        // 模拟数据存储
+        let projects = JSON.parse(localStorage.getItem('arProjects')) || [];
+        let currentOriginalImage = null;
+        let currentVideoURL = null;
+        let stream = null;
+        let markerDetectionInterval = null;
+        let currentVideoElement = null;
+        
+        // DOM元素
+        const loginBtn = document.getElementById('loginBtn');
+        const loginModal = document.getElementById('loginModal');
+        const adminPanel = document.getElementById('adminPanel');
+        const createProjectBtn = document.getElementById('createProjectBtn');
+        const createProjectModal = document.getElementById('createProjectModal');
+        const editProjectModal = document.getElementById('editProjectModal');
+        const helpModal = document.getElementById('helpModal');
+        const helpBtn = document.getElementById('helpBtn');
+        const closeModalButtons = document.querySelectorAll('.close-modal');
+        const submitLogin = document.getElementById('submitLogin');
+        const projectsGrid = document.getElementById('projectsGrid');
+        const startCameraBtn = document.getElementById('startCameraBtn');
+        const stopCameraBtn = document.getElementById('stopCameraBtn');
+        const cameraFeed = document.getElementById('cameraFeed');
+        const cameraStatus = document.getElementById('cameraStatus');
+        const scanLine = document.getElementById('scanLine');
+        const detectionIndicator = document.getElementById('detectionIndicator');
+        const detectionDot = document.getElementById('detectionDot');
+        const markerOutline = document.getElementById('markerOutline');
+        const arVideoOverlay = document.getElementById('arVideoOverlay');
+        const arVideo = document.getElementById('arVideo');
+        const projectImage = document.getElementById('projectImage');
+        const projectVideo = document.getElementById('projectVideo');
+        const imagePreview = document.getElementById('imagePreview');
+        const videoPreview = document.getElementById('videoPreview');
+        const saveProjectBtn = document.getElementById('saveProjectBtn');
+        const deleteProjectBtn = document.getElementById('deleteProjectBtn');
+        const updateProjectBtn = document.getElementById('updateProjectBtn');
+        const editProjectId = document.getElementById('editProjectId');
+        const editProjectName = document.getElementById('editProjectName');
+        const editImagePreview = document.getElementById('editImagePreview');
+        const editVideoPreview = document.getElementById('editVideoPreview');
+        const permissionHelp = document.getElementById('permissionHelp');
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            renderProjects();
+            checkCameraPermission();
+        });
+        
+        // 检查摄像头权限
+        async function checkCameraPermission() {
+            try {
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    cameraStatus.textContent = '您的浏览器不支持摄像头功能';
+                    permissionHelp.style.display = 'block';
+                    return;
+                }
+                
+                const permissions = await navigator.permissions.query({ name: 'camera' });
+                
+                if (permissions.state === 'granted') {
+                    cameraStatus.textContent = '摄像头权限已授予，点击"开启相机"开始扫描';
+                } else if (permissions.state === 'prompt') {
+                    cameraStatus.textContent = '点击"开启相机"按钮请求摄像头权限';
+                } else if (permissions.state === 'denied') {
+                    cameraStatus.textContent = '摄像头权限已被拒绝，请检查浏览器设置';
+                    permissionHelp.style.display = 'block';
+                }
+            } catch (err) {
+                console.log('无法检查摄像头权限状态:', err);
+                cameraStatus.textContent = '点击"开启相机"按钮尝试访问摄像头';
+            }
+        }
+        
+        // 打开登录模态框
+        loginBtn.addEventListener('click', () => {
+            loginModal.style.display = 'flex';
+        });
+        
+        // 打开帮助模态框
+        helpBtn.addEventListener('click', () => {
+            helpModal.style.display = 'flex';
+        });
+        
+        // 关闭模态框
+        closeModalButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                loginModal.style.display = 'none';
+                createProjectModal.style.display = 'none';
+                editProjectModal.style.display = 'none';
+                helpModal.style.display = 'none';
+            });
+        });
+        
+        // 点击模态框外部关闭
+        window.addEventListener('click', (e) => {
+            if (e.target === loginModal) loginModal.style.display = 'none';
+            if (e.target === createProjectModal) createProjectModal.style.display = 'none';
+            if (e.target === editProjectModal) editProjectModal.style.display = 'none';
+            if (e.target === helpModal) helpModal.style.display = 'none';
+        });
+        
+        // 提交登录
+        submitLogin.addEventListener('click', () => {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            if (username === 'admin2025' && password === 'Tjh244466666') {
+                alert('登入成功！');
+                loginModal.style.display = 'none';
+                adminPanel.style.display = 'block';
+                loginBtn.innerHTML = '<i class="fas fa-user"></i> 登出';
+                loginBtn.onclick = logout;
+            } else {
+                alert('用户名或密码错误！');
+            }
+        });
+        
+        // 登出功能
+        function logout() {
+            adminPanel.style.display = 'none';
+            loginBtn.innerHTML = '<i class="fas fa-user-lock"></i> 登入';
+            loginBtn.onclick = () => loginModal.style.display = 'flex';
+            alert('已成功登出');
+        }
+        
+        // 打开创建项目模态框
+        createProjectBtn.addEventListener('click', () => {
+            createProjectModal.style.display = 'flex';
+            document.getElementById('projectName').value = '';
+            imagePreview.innerHTML = '<p>原图预览区域</p>';
+            videoPreview.innerHTML = '<p>视频预览区域</p>';
+            currentOriginalImage = null;
+            currentVideoURL = null;
+        });
+        
+        // 开启相机
+        startCameraBtn.addEventListener('click', async () => {
+            try {
+                const isSecure = window.location.protocol === 'https:' || window.location.hostname === 'localhost';
+                if (!isSecure) {
+                    cameraStatus.textContent = '请在HTTPS环境或localhost中访问此页面';
+                    permissionHelp.style.display = 'block';
+                    return;
+                }
+                
+                cameraStatus.textContent = '正在请求摄像头权限...';
+                
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: 'environment',
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    } 
+                });
+                
+                cameraFeed.srcObject = stream;
+                cameraFeed.style.display = 'block';
+                document.querySelector('.camera-placeholder i').style.display = 'none';
+                cameraStatus.textContent = '摄像头已开启，请扫描图像';
+                scanLine.style.display = 'block';
+                detectionIndicator.style.display = 'flex';
+                startCameraBtn.style.display = 'none';
+                stopCameraBtn.style.display = 'inline-block';
+                permissionHelp.style.display = 'none';
+                
+                startMarkerDetection();
+                
+            } catch (err) {
+                console.error('摄像头访问错误:', err);
+                cameraStatus.textContent = '无法访问摄像头: ' + err.message;
+                permissionHelp.style.display = 'block';
+                
+                if (err.name === 'NotAllowedError') {
+                    cameraStatus.textContent = '摄像头权限已被拒绝，请检查浏览器设置';
+                } else if (err.name === 'NotFoundError') {
+                    cameraStatus.textContent = '未找到可用的摄像头设备';
+                } else if (err.name === 'NotReadableError') {
+                    cameraStatus.textContent = '摄像头设备正被其他应用程序使用';
+                } else {
+                    cameraStatus.textContent = '无法访问摄像头: ' + err.message;
+                }
+            }
+        });
+        
+        // 关闭相机
+        stopCameraBtn.addEventListener('click', () => {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                cameraFeed.style.display = 'none';
+                document.querySelector('.camera-placeholder i').style.display = 'block';
+                cameraStatus.textContent = '摄像头已关闭，点击"开启相机"重新开始';
+                scanLine.style.display = 'none';
+                detectionIndicator.style.display = 'none';
+                detectionDot.classList.remove('active');
+                markerOutline.style.display = 'none';
+                arVideoOverlay.style.display = 'none';
+                arVideo.style.display = 'none';
+                
+                if (currentVideoElement) {
+                    currentVideoElement.pause();
+                    currentVideoElement = null;
+                }
+                
+                startCameraBtn.style.display = 'inline-block';
+                stopCameraBtn.style.display = 'none';
+                
+                stopMarkerDetection();
+            }
+        });
+        
+        // 开始标记检测
+        function startMarkerDetection() {
+            if (markerDetectionInterval) {
+                clearInterval(markerDetectionInterval);
+            }
+            
+            markerDetectionInterval = setInterval(() => {
+                const detectionProbability = 0.7;
+                const isDetected = Math.random() > detectionProbability;
+                
+                if (isDetected) {
+                    detectionDot.classList.add('active');
+                    
+                    markerOutline.style.display = 'block';
+                    const width = 150 + Math.random() * 50;
+                    const height = 150 + Math.random() * 50;
+                    const left = 100 + Math.random() * (cameraFeed.offsetWidth - width - 200);
+                    const top = 100 + Math.random() * (cameraFeed.offsetHeight - height - 200);
+                    
+                    markerOutline.style.width = `${width}px`;
+                    markerOutline.style.height = `${height}px`;
+                    markerOutline.style.left = `${left}px`;
+                    markerOutline.style.top = `${top}px`;
+                    
+                    showARVideo(left, top, width, height);
+                    
+                } else {
+                    detectionDot.classList.remove('active');
+                    markerOutline.style.display = 'none';
+                    hideARVideo();
+                }
+            }, 1000);
+        }
+        
+        // 停止标记检测
+        function stopMarkerDetection() {
+            if (markerDetectionInterval) {
+                clearInterval(markerDetectionInterval);
+                markerDetectionInterval = null;
+            }
+        }
+        
+        // 显示AR视频
+        function showARVideo(left, top, width, height) {
+            if (projects.length > 0 && projects[0].videoURL) {
+                arVideo.src = projects[0].videoURL;
+                arVideoOverlay.style.display = 'flex';
+                arVideo.style.display = 'block';
+                
+                const videoWidth = Math.min(width * 1.5, cameraFeed.offsetWidth * 0.8);
+                const videoHeight = videoWidth * (9/16);
+                
+                arVideo.style.width = `${videoWidth}px`;
+                arVideo.style.height = `${videoHeight}px`;
+                
+                let videoLeft = left + width + 20;
+                if (videoLeft + videoWidth > cameraFeed.offsetWidth) {
+                    videoLeft = left - videoWidth - 20;
+                }
+                
+                let videoTop = top;
+                if (videoTop + videoHeight > cameraFeed.offsetHeight) {
+                    videoTop = cameraFeed.offsetHeight - videoHeight - 20;
+                }
+                
+                arVideo.style.position = 'absolute';
+                arVideo.style.left = `${videoLeft}px`;
+                arVideo.style.top = `${videoTop}px`;
+                
+                arVideo.play();
+                currentVideoElement = arVideo;
+            }
+        }
+        
+        // 隐藏AR视频
+        function hideARVideo() {
+            arVideoOverlay.style.display = 'none';
+            arVideo.style.display = 'none';
+            
+            if (currentVideoElement) {
+                currentVideoElement.pause();
+                currentVideoElement = null;
+            }
+        }
+        
+        // 原图上传预览
+        projectImage.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    currentOriginalImage = event.target.result;
+                    imagePreview.innerHTML = `<img src="${currentOriginalImage}" alt="上传的原图" style="max-width:100%; max-height:100%;">`;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // 视频上传预览
+        projectVideo.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    currentVideoURL = event.target.result;
+                    videoPreview.innerHTML = `
+                        <video controls style="max-width:100%; max-height:100%;">
+                            <source src="${currentVideoURL}" type="${file.type}">
+                            您的浏览器不支持视频播放
+                        </video>
+                    `;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // 保存项目
+        saveProjectBtn.addEventListener('click', () => {
+            const projectName = document.getElementById('projectName').value;
+            if (!projectName) {
+                alert('请输入项目名称');
+                return;
+            }
+            
+            if (!currentOriginalImage) {
+                alert('请上传原图');
+                return;
+            }
+            
+            if (!currentVideoURL) {
+                alert('请上传AR视频');
+                return;
+            }
+            
+            const newProject = {
+                id: Date.now(),
+                name: projectName,
+                originalImage: currentOriginalImage,
+                videoURL: currentVideoURL,
+                createdAt: new Date().toLocaleDateString(),
+                status: '已发布'
+            };
+            
+            projects.push(newProject);
+            localStorage.setItem('arProjects', JSON.stringify(projects));
+            
+            alert('项目保存成功！');
+            createProjectModal.style.display = 'none';
+            renderProjects();
+        });
+        
+        // 渲染项目列表
+        function renderProjects() {
+            projectsGrid.innerHTML = '';
+            
+            if (projects.length === 0) {
+                projectsGrid.innerHTML = '<p>暂无项目，请创建新项目</p>';
+                return;
+            }
+            
+            projects.forEach(project => {
+                const projectCard = document.createElement('div');
+                projectCard.className = 'project-card';
+                projectCard.innerHTML = `
+                    <h3>${project.name}</h3>
+                    <div class="project-image">
+                        <img src="${project.originalImage}" alt="${project.name}">
+                    </div>
+                    <p>创建于: ${project.createdAt}</p>
+                    <p>状态: ${project.status}</p>
+                    <div class="project-actions">
+                        <button class="btn btn-secondary" onclick="editProject(${project.id})">
+                            <i class="fas fa-edit"></i> 编辑
+                        </button>
+                        <button class="btn btn-primary" onclick="viewProject(${project.id})">
+                            <i class="fas fa-eye"></i> 查看
+                        </button>
+                    </div>
+                `;
+                projectsGrid.appendChild(projectCard);
+            });
+        }
+        
+        // 编辑项目
+        window.editProject = function(id) {
+            const project = projects.find(p => p.id === id);
+            if (project) {
+                editProjectId.value = project.id;
+                editProjectName.value = project.name;
+                
+                editImagePreview.innerHTML = `<img src="${project.originalImage}" alt="原图" style="max-width:100%; max-height:100%;">`;
+                editVideoPreview.innerHTML = `
+                    <video controls style="max-width:100%; max-height:100%;">
+                        <source src="${project.videoURL}" type="video/mp4">
+                        您的浏览器不支持视频播放
+                    </video>
+                `;
+                
+                editProjectModal.style.display = 'flex';
+            }
+        };
+        
+        // 更新项目
+        updateProjectBtn.addEventListener('click', () => {
+            const id = parseInt(editProjectId.value);
+            const name = editProjectName.value;
+            
+            if (!name) {
+                alert('请输入项目名称');
+                return;
+            }
+            
+            const index = projects.findIndex(p => p.id === id);
+            if (index !== -1) {
+                projects[index].name = name;
+                localStorage.setItem('arProjects', JSON.stringify(projects));
+                alert('项目更新成功！');
+                editProjectModal.style.display = 'none';
+                renderProjects();
+            }
+        });
+        
+        // 删除项目
+        deleteProjectBtn.addEventListener('click', () => {
+            const id = parseInt(editProjectId.value);
+            
+            if (confirm('确定要删除这个项目吗？此操作不可恢复。')) {
+                projects = projects.filter(p => p.id !== id);
+                localStorage.setItem('arProjects', JSON.stringify(projects));
+                alert('项目已删除');
+                editProjectModal.style.display = 'none';
+                renderProjects();
+            }
+        });
+        
+        // 查看项目
+        window.viewProject = function(id) {
+            const project = projects.find(p => p.id === id);
+            if (project) {
+                const viewModal = document.createElement('div');
+                viewModal.className = 'modal';
+                viewModal.style.display = 'flex';
+                viewModal.innerHTML = `
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h2>${project.name}</h2>
+                            <span class="close-modal">&times;</span>
+                        </div>
+                        <div style="text-align:center;">
+                            <h3>原图</h3>
+                            <img src="${project.originalImage}" alt="原图" style="max-width:100%; max-height:300px; margin:10px 0;">
+                            <h3>AR视频</h3>
+                            <video controls style="max-width:100%; max-height:300px; margin:10px 0;">
+                                <source src="${project.videoURL}" type="video/mp4">
+                                您的浏览器不支持视频播放
+                            </video>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(viewModal);
+                
+                viewModal.querySelector('.close-modal').addEventListener('click', () => {
+                    document.body.removeChild(viewModal);
+                });
+                
+                viewModal.addEventListener('click', (e) => {
+                    if (e.target === viewModal) {
+                        document.body.removeChild(viewModal);
+                    }
+                });
+            }
+        };
+    </script>
+</body>
+</html>
