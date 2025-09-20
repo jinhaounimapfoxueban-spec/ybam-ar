@@ -151,6 +151,6 @@ export default function Home() {
         </div>
       </div>
     );
-  }
+}}
 
   // 其余代码保持不变...
