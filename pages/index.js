@@ -12,15 +12,14 @@ export default function Home() {
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isClient, setIsClient] = useState(false); // 新增状态检测客户端
+  const [isClient, setIsClient] = useState(false);
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const router = useRouter();
 
   useEffect(() => {
-    setIsClient(true); // 标记为客户端环境
+    setIsClient(true);
     
-    // 只在客户端检查认证状态
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('authToken');
       const user = localStorage.getItem('user');
@@ -51,7 +50,6 @@ export default function Home() {
       }
       setIsCameraOpen(true);
       
-      // 模拟AR标记检测
       const detectionInterval = setInterval(() => {
         const isDetected = Math.random() > 0.7;
         setDetected(isDetected);
@@ -123,7 +121,6 @@ export default function Home() {
     setIsLoggedIn(false);
   };
 
-  // 模拟项目数据
   const projects = [
     {
       _id: '1',
@@ -142,7 +139,6 @@ export default function Home() {
     };
   }, []);
 
-  // 在返回前添加客户端检查
   if (!isClient) {
     return (
       <div className="container">
@@ -151,6 +147,28 @@ export default function Home() {
         </div>
       </div>
     );
-}}
+  }
 
-  // 其余代码保持不变...
+  // 在这里添加你的主组件返回的JSX代码
+  return (
+    <div className="container">
+      <Head>
+        <title>AR项目管理系统</title>
+        <meta name="description" content="马佛青文化委员会AR项目管理系统" />
+      </Head>
+
+      <header>
+        <h1>AR项目管理系统</h1>
+        {isLoggedIn ? (
+          <button onClick={handleLogout}>退出登录</button>
+        ) : (
+          <button onClick={() => setShowLogin(true)}>管理员登录</button>
+        )}
+      </header>
+
+      <main>
+        {/* 你的主页面内容 */}
+      </main>
+    </div>
+  );
+} // ← 这是正确的closing brace，不要删除
