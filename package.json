@@ -1,33 +1,31 @@
 {
-"name": "ar-project",
-"version": "1.0.0",
-"description": "马佛青文化委员会AR项目管理系统",
-"scripts": {
-"dev": "next dev",
-"build": "next build",
-"start": "next start",
-"lint": "next lint",
-"postinstall": "npx next@14.0.0 telemetry disable"
-},
-"dependencies": {
-"next": "14.0.0",
-"react": "18.2.0",
-"react-dom": "18.2.0",
-"mongodb": "6.3.0",
-"bcryptjs": "2.4.3",
-"jsonwebtoken": "9.0.2",
-"saslprep": "^1.0.3",
-"@next/swc-darwin-x64": "14.0.0",
-"@next/swc-linux-x64-gnu": "14.0.0",
-"@next/swc-win32-x64-msvc": "14.0.0",
-"@next/swc-linux-arm64-gnu": "14.0.0",
-"@next/swc-darwin-arm64": "14.0.0"
-},
-"devDependencies": {
-"eslint": "^8.56.0",
-"eslint-config-next": "14.0.0"
-},
-"keywords": ["ar", "mongodb", "nextjs", "camera"],
-"author": "马佛青文化委员会",
-"license": "MIT"
+  "name": "ar-project",
+  "version": "1.0.0",
+  "description": "马佛青文化委员会AR项目管理系统",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "postinstall": "npx next@14.0.0 telemetry disable"
+  },
+  "dependencies": {
+    "next": "14.0.0",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "mongodb": "6.3.0",
+    "bcryptjs": "2.4.3",
+    "jsonwebtoken": "9.0.2",
+    "saslprep": "^1.0.3"
+  },
+  "devDependencies": {
+    "eslint": "^8.56.0",
+    "eslint-config-next": "14.0.0",
+    "rimraf": "^5.0.5",
+    "glob": "^10.3.10",
+    "lru-cache": "^10.2.0"
+  },
+  "keywords": ["ar", "mongodb", "nextjs", "camera"],
+  "author": "马佛青文化委员会",
+  "license": "MIT"
 }
