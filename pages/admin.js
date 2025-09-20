@@ -5,14 +5,12 @@ import Head from 'next/head';
 export default function Admin() {
   const [projects, setProjects] = useState([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [currentProject, setCurrentProject] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
-    originalImage: null,
+    originalImage: '',
     videoURL: ''
   });
+  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
@@ -40,9 +38,7 @@ export default function Admin() {
         const data = await response.json();
         setProjects(data);
       } else if (response.status === 401) {
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('user');
-        router.push('/');
+        handleLogout();
       }
     } catch (error) {
       console.error('获取项目失败:', error);
@@ -73,7 +69,7 @@ export default function Admin() {
 
       if (response.ok) {
         setShowCreateModal(false);
-        setFormData({ name: '', originalImage: null, videoURL: '' });
+        setFormData({ name: '', originalImage: '', videoURL: '' });
         fetchProjects();
       }
     } catch (error) {
@@ -145,40 +141,43 @@ export default function Admin() {
         </div>
 
         <div className="projects-grid">
-          {projects.map(project => (
-            <div key={project._id} className="project-card">
-              <h3>{project.name}</h3>
-              <div className="project-image">
-                {project.originalImage ? (
-                  <img src={project.originalImage} alt={project.name} />
-                ) : (
-                  <i className="fas fa-image"></i>
-                )}
+          {projects.length > 0 ? (
+            projects.map(project => (
+              <div key={project._id} className="project-card">
+                <h3>{project.name}</h3>
+                <div className="project-image">
+                  {project.originalImage ? (
+                    <img src={project.originalImage} alt={project.name} />
+                  ) : (
+                    <i className="fas fa-image"></i>
+                  )}
+                </div>
+                <p>创建时间: {new Date(project.createdAt).toLocaleDateString()}</p>
+                <div className="project-actions">
+                  <button 
+                    className="btn btn-danger"
+                    onClick={() => handleDelete(project._id)}
+                  >
+                    <i className="fas fa-trash"></i> 删除
+                  </button>
+                </div>
               </div>
-              <p>创建时间: {new Date(project.createdAt).toLocaleDateString()}</p>
-              <div className="project-actions">
-                <button 
-                  className="btn btn-secondary"
-                  onClick={() => {
-                    setCurrentProject(project);
-                    setShowEditModal(true);
-                  }}
-                >
-                  <i className="fas fa-edit"></i> 编辑
-                </button>
-                <button 
-                  className="btn btn-danger"
-                  onClick={() => handleDelete(project._id)}
-                >
-                  <i className="fas fa-trash"></i> 删除
-                </button>
-              </div>
+            ))
+          ) : (
+            <div className="no-projects">
+              <i className="fas fa-inbox"></i>
+              <p>暂无项目</p>
+              <button 
+                className="btn btn-primary"
+                onClick={() => setShowCreateModal(true)}
+              >
+                创建第一个项目
+              </button>
             </div>
-          ))}
+          )}
         </div>
       </div>
 
-      {/* 创建项目模态框 */}
       {showCreateModal && (
         <div className="modal-overlay">
           <div className="modal-content">
@@ -205,7 +204,7 @@ export default function Admin() {
                 <label>原图URL</label>
                 <input
                   type="url"
-                  value={formData.originalImage || ''}
+                  value={formData.originalImage}
                   onChange={(e) => setFormData({ ...formData, originalImage: e.target.value })}
                   placeholder="输入原图URL"
                 />
@@ -222,9 +221,14 @@ export default function Admin() {
                 />
               </div>
               
-              <button type="submit" className="btn btn-primary full-width">
-                <i className="fas fa-save"></i> 创建项目
-              </button>
+              <div className="form-actions">
+                <button type="button" className="btn btn-secondary" onClick={() => setShowCreateModal(false)}>
+                  取消
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  <i className="fas fa-save"></i> 创建项目
+                </button>
+              </div>
             </form>
           </div>
         </div>
@@ -243,6 +247,13 @@ export default function Admin() {
           justify-content: space-between;
           align-items: center;
           margin-bottom: 2rem;
+          flex-wrap: wrap;
+          gap: 15px;
+        }
+        
+        .admin-header h2 {
+          color: #fdbb2d;
+          margin: 0;
         }
         
         .projects-grid {
@@ -256,11 +267,17 @@ export default function Admin() {
           border-radius: 15px;
           padding: 20px;
           box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+          transition: transform 0.3s ease;
+        }
+        
+        .project-card:hover {
+          transform: translateY(-5px);
         }
         
         .project-card h3 {
           color: #fdbb2d;
           margin-bottom: 15px;
+          font-size: 1.2rem;
         }
         
         .project-image {
@@ -281,6 +298,11 @@ export default function Admin() {
           object-fit: cover;
         }
         
+        .project-image .fas {
+          font-size: 3rem;
+          color: #4e54c8;
+        }
+        
         .project-actions {
           display: flex;
           gap: 10px;
@@ -297,6 +319,26 @@ export default function Admin() {
           background-color: #bd2130;
         }
         
+        .no-projects {
+          grid-column: 1 / -1;
+          text-align: center;
+          padding: 3rem;
+          background-color: rgba(255, 255, 255, 0.1);
+          border-radius: 15px;
+          border: 2px dashed #4e54c8;
+        }
+        
+        .no-projects .fas {
+          font-size: 4rem;
+          color: #4e54c8;
+          margin-bottom: 1rem;
+        }
+        
+        .no-projects p {
+          margin-bottom: 2rem;
+          color: #e1e1e1;
+        }
+        
         .loading {
           display: flex;
           flex-direction: column;
@@ -308,6 +350,32 @@ export default function Admin() {
         
         .fa-spin {
           font-size: 2rem;
+        }
+        
+        .form-actions {
+          display: flex;
+          gap: 15px;
+          justify-content: flex-end;
+          margin-top: 2rem;
+        }
+        
+        @media (max-width: 768px) {
+          .admin-header {
+            flex-direction: column;
+            text-align: center;
+          }
+          
+          .projects-grid {
+            grid-template-columns: 1fr;
+          }
+          
+          .form-actions {
+            flex-direction: column;
+          }
+          
+          .form-actions .btn {
+            width: 100%;
+          }
         }
       `}</style>
     </div>
