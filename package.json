@@ -18,8 +18,11 @@
     "jsonwebtoken": "^9.0.2"
   },
   "devDependencies": {
-    "eslint": "^8.57.0",
+    "eslint": "^9.14.0",
     "eslint-config-next": "^14.2.6"
+  },
+  "resolutions": {
+    "eslint": "^8.57.0"
   },
   "engines": {
     "node": ">=18.0.0",
