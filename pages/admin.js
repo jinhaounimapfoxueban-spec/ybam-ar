@@ -100,6 +100,6 @@ export default function Admin() {
     } catch (error) {
       console.error('删除项目失败:', error);
     }
-  };
+  };}
 
   // 其余代码保持不变...
