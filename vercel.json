@@ -3,10 +3,7 @@
   "builds": [
     {
       "src": "package.json",
-      "use": "@vercel/next",
-      "config": {
-        "installCommand": "npm install --legacy-peer-deps"
-      }
+      "use": "@vercel/next"
     }
   ],
   "rewrites": [
@@ -15,14 +12,9 @@
       "destination": "/pages/index.html"
     }
   ],
-  "env": {
-    "MONGODB_URI": "mongodb+srv://aradmin:Tjh244466666@ar-cluster.ww1enpt.mongodb.net/?retryWrites=true&w=majority&appName=ar-cluster",
-    "JWT_SECRET": "123456789"
-  },
   "build": {
     "env": {
-      "NODE_NO_WARNINGS": "1",
-      "NODE_OPTIONS": "--no-warnings"
+      "NODE_NO_WARNINGS": "1"
     }
   }
 }
