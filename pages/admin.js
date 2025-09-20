@@ -1,86 +1,3 @@
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
-import Head from 'next/head';
-
-export default function Admin() {
-  const [projects, setProjects] = useState([]);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    originalImage: '',
-    videoURL: ''
-  });
-  const [isLoading, setIsLoading] = useState(true);
-  const [authToken, setAuthToken] = useState(null); // 新增状态存储token
-  const router = useRouter();
-
-  useEffect(() => {
-    // 在客户端获取 token
-    const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
-    setAuthToken(token);
-    
-    if (!token) {
-      router.push('/');
-      return;
-    }
-    
-    fetchProjects(token);
-  }, [router]);
-
-  const fetchProjects = async (token) => {
-    try {
-      const response = await fetch('/api/projects', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setProjects(data);
-      } else if (response.status === 401) {
-        handleLogout();
-      }
-    } catch (error) {
-      console.error('获取项目失败:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleLogout = () => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('user');
-    }
-    router.push('/');
-  };
-
-  const handleCreate = async (e) => {
-    e.preventDefault();
-    
-    if (!authToken) return;
-    
-    try {
-      const response = await fetch('/api/projects', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`
-        },
-        body: JSON.stringify(formData)
-      });
-
-      if (response.ok) {
-        setShowCreateModal(false);
-        setFormData({ name: '', originalImage: '', videoURL: '' });
-        fetchProjects(authToken);
-      }
-    } catch (error) {
-      console.error('创建项目失败:', error);
-    }
-  };
-
   const handleDelete = async (id) => {
     if (!confirm('确定要删除这个项目吗？') || !authToken) return;
 
@@ -100,6 +17,36 @@ export default function Admin() {
     } catch (error) {
       console.error('删除项目失败:', error);
     }
-  };}
+  }; // 这里应该是分号，不是}
 
-  // 其余代码保持不变...
+  // 在这里添加组件的返回语句
+  return (
+    <div className="container">
+      <Head>
+        <title>管理后台 - AR项目管理系统</title>
+      </Head>
+
+      <header>
+        <h1>项目管理后台</h1>
+        <button onClick={handleLogout}>退出登录</button>
+      </header>
+
+      <main>
+        <button onClick={() => setShowCreateModal(true)}>创建新项目</button>
+        
+        {isLoading ? (
+          <p>加载中...</p>
+        ) : (
+          <div>
+            {projects.map(project => (
+              <div key={project._id}>
+                <h3>{project.name}</h3>
+                <button onClick={() => handleDelete(project._id)}>删除</button>
+              </div>
+            ))}
+          </div>
+        )}
+      </main>
+    </div>
+  );
+} // ← 这是正确的closing brace，不要删除
