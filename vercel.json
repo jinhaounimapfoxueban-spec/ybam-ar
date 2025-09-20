@@ -14,6 +14,6 @@
   ],
   "env": {
     "MONGODB_URI": "mongodb+srv://aradmin:Tjh244466666@ar-cluster.ww1enpt.mongodb.net/ar-project?retryWrites=true&w=majority",
-    "JWT_SECRET": "your-super-secret-jwt-key-here"
+    "JWT_SECRET": "123456789"
   }
 }
