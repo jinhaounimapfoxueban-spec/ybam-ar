@@ -2,16 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  // 移除无效的api配置
-  experimental: {
-    serverComponentsExternalPackages: [],
-  },
-  // 增加body大小限制
-  api: {
-    bodyParser: {
-      sizeLimit: '50mb',
-    },
-  },
+  // 移除所有实验性配置
 };
 
 module.exports = nextConfig;
