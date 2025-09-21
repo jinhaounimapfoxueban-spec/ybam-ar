@@ -32,12 +32,10 @@ export default async function handler(req, res) {
     }
     
     if (req.method === 'GET') {
-      // 获取所有项目
       const projects = await db.collection('projects').find({}).sort({ createdAt: -1 }).toArray();
       res.status(200).json(projects);
     } 
     else if (req.method === 'POST') {
-      // 创建新项目 - 使用URL而不是文件上传
       const { name, originalImage, videoURL } = req.body;
       
       if (!name || !originalImage || !videoURL) {
@@ -58,7 +56,6 @@ export default async function handler(req, res) {
       res.status(201).json({ ...project, _id: result.insertedId });
     }
     else if (req.method === 'PUT') {
-      // 更新项目
       const { id, name, originalImage, videoURL } = req.body;
       
       if (!id || !name) {
@@ -85,7 +82,6 @@ export default async function handler(req, res) {
       res.status(200).json({ message: '项目更新成功' });
     }
     else if (req.method === 'DELETE') {
-      // 删除项目
       const { id } = req.body;
       
       if (!id) {
