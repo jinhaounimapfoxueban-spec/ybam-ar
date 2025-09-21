@@ -4,71 +4,45 @@ const handleCreate = async (e) => {
   e.preventDefault();
   
   if (!authToken) return;
-  if (!formData.name || !formData.originalImage || !formData.videoURL) {
-    alert('请填写所有字段并上传文件');
+  
+  // 提示用户使用外部URL
+  const originalImage = prompt('请输入图片URL:');
+  const videoURL = prompt('请输入视频URL:');
+  
+  if (!formData.name || !originalImage || !videoURL) {
+    alert('请填写所有字段');
     return;
   }
 
-  setUploading(true);
+  setIsLoading(true);
 
   try {
-    const formDataToSend = new FormData();
-    formDataToSend.append('name', formData.name);
-    formDataToSend.append('originalImage', formData.originalImage);
-    formDataToSend.append('videoURL', formData.videoURL);
-
     const response = await fetch('/api/projects', {
       method: 'POST',
       headers: {
+        'Content-Type': 'application/json',
         'Authorization': `Bearer ${authToken}`
       },
-      body: formDataToSend
+      body: JSON.stringify({
+        name: formData.name,
+        originalImage,
+        videoURL
+      })
     });
 
-    // ... 其余代码保持不变
+    if (response.ok) {
+      setShowCreateModal(false);
+      setFormData({ name: '', originalImage: null, videoURL: null });
+      fetchProjects(authToken);
+      alert('项目创建成功！');
+    } else {
+      const error = await response.json();
+      alert('创建失败: ' + error.message);
+    }
   } catch (error) {
     console.error('创建项目失败:', error);
     alert('创建失败，请重试');
   } finally {
-    setUploading(false);
-  }
-};
-
-const handleUpdate = async (e) => {
-  e.preventDefault();
-  
-  if (!authToken) return;
-  if (!editFormData.name) {
-    alert('项目名称不能为空');
-    return;
-  }
-
-  setUploading(true);
-
-  try {
-    const formDataToSend = new FormData();
-    formDataToSend.append('id', editFormData.id);
-    formDataToSend.append('name', editFormData.name);
-    if (editFormData.originalImage) {
-      formDataToSend.append('originalImage', editFormData.originalImage);
-    }
-    if (editFormData.videoURL) {
-      formDataToSend.append('videoURL', editFormData.videoURL);
-    }
-
-    const response = await fetch('/api/projects', {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${authToken}`
-      },
-      body: formDataToSend
-    });
-
-    // ... 其余代码保持不变
-  } catch (error) {
-    console.error('更新项目失败:', error);
-    alert('更新失败，请重试');
-  } finally {
-    setUploading(false);
+    setIsLoading(false);
   }
 };
