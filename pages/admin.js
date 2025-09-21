@@ -5,7 +5,14 @@ import Head from 'next/head';
 export default function Admin() {
   const [projects, setProjects] = useState([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [formData, setFormData] = useState({
+    name: '',
+    originalImage: '',
+    videoURL: ''
+  });
+  const [editFormData, setEditFormData] = useState({
+    id: '',
     name: '',
     originalImage: '',
     videoURL: ''
@@ -80,8 +87,33 @@ export default function Admin() {
     }
   };
 
+  const handleUpdate = async (e) => {
+    e.preventDefault();
+    
+    if (!authToken) return;
+    
+    try {
+      const response = await fetch('/api/projects', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify(editFormData)
+      });
+
+      if (response.ok) {
+        setShowEditModal(false);
+        setEditFormData({ id: '', name: '', originalImage: '', videoURL: '' });
+        fetchProjects(authToken);
+      }
+    } catch (error) {
+      console.error('更新项目失败:', error);
+    }
+  };
+
   const handleDelete = async (id) => {
-    if (!confirm('确定要删除这个项目吗？') || !authToken) return;
+    if (!confirm('确定要删除这个项目吗？此操作不可恢复。') || !authToken) return;
 
     try {
       const response = await fetch('/api/projects', {
@@ -101,87 +133,417 @@ export default function Admin() {
     }
   };
 
+  const openEditModal = (project) => {
+    setEditFormData({
+      id: project._id,
+      name: project.name,
+      originalImage: project.originalImage,
+      videoURL: project.videoURL
+    });
+    setShowEditModal(true);
+  };
+
   return (
     <div className="container">
       <Head>
         <title>管理后台 - AR项目管理系统</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
       </Head>
 
-      <header style={{ padding: '1rem', borderBottom: '1px solid #ccc' }}>
-        <h1>项目管理后台</h1>
-        <button onClick={handleLogout} style={{ padding: '8px 16px' }}>退出登录</button>
-      </header>
-
-      <main style={{ padding: '2rem' }}>
-        <button onClick={() => setShowCreateModal(true)} style={{ padding: '10px 20px', marginBottom: '2rem' }}>
-          创建新项目
-        </button>
+      <style jsx global>{`
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
         
-        {isLoading ? (
-          <p>加载中...</p>
-        ) : (
-          <div>
-            {projects.map(project => (
-              <div key={project._id} style={{ 
-                border: '1px solid #ddd', 
-                padding: '1rem', 
-                margin: '10px 0',
-                borderRadius: '4px'
-              }}>
-                <h3>{project.name}</h3>
-                <p>创建时间: {new Date(project.createdAt).toLocaleDateString()}</p>
-                <button onClick={() => handleDelete(project._id)} style={{ padding: '5px 10px' }}>
-                  删除
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
+        body {
+          background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+          min-height: 100vh;
+          color: #fff;
+        }
+        
+        .admin-container {
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 20px;
+        }
+        
+        .admin-header {
+          background-color: rgba(0, 0, 0, 0.7);
+          padding: 1rem 2rem;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+          margin-bottom: 2rem;
+          border-radius: 10px;
+        }
+        
+        .admin-header h1 {
+          font-size: 1.8rem;
+          background: linear-gradient(to right, #fdbb2d, #b21f1f);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+        }
+        
+        .btn {
+          padding: 10px 20px;
+          border: none;
+          border-radius: 50px;
+          cursor: pointer;
+          font-weight: 600;
+          transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+          background-color: #4e54c8;
+          color: white;
+        }
+        
+        .btn-primary:hover {
+          background-color: #3f43a1;
+          transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+          background-color: transparent;
+          border: 2px solid #4e54c8;
+          color: #4e54c8;
+        }
+        
+        .btn-secondary:hover {
+          background-color: rgba(78, 84, 200, 0.1);
+        }
+        
+        .btn-danger {
+          background-color: #dc3545;
+          color: white;
+        }
+        
+        .btn-danger:hover {
+          background-color: #bd2130;
+          transform: translateY(-2px);
+        }
+        
+        .admin-content {
+          background-color: rgba(0, 0, 0, 0.7);
+          border-radius: 20px;
+          padding: 2rem;
+        }
+        
+        .admin-panel-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 2rem;
+        }
+        
+        .projects-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+          gap: 20px;
+          margin-top: 20px;
+        }
+        
+        .project-card {
+          background: linear-gradient(135deg, #3a3f7d, #1a2a6c);
+          border-radius: 15px;
+          padding: 20px;
+          box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+          transition: transform 0.3s ease;
+        }
+        
+        .project-card:hover {
+          transform: translateY(-5px);
+        }
+        
+        .project-card h3 {
+          margin-bottom: 10px;
+          color: #fdbb2d;
+        }
+        
+        .project-image {
+          width: 100%;
+          height: 180px;
+          background-color: #2c2c2c;
+          border-radius: 10px;
+          margin: 10px 0;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          font-size: 3rem;
+          color: #4e54c8;
+          overflow: hidden;
+        }
+        
+        .project-image img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+        
+        .project-actions {
+          display: flex;
+          justify-content: space-between;
+          margin-top: 15px;
+        }
+        
+        .modal {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background-color: rgba(0, 0, 0, 0.8);
+          z-index: 1000;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+        }
+        
+        .modal-content {
+          background: linear-gradient(135deg, #1a2a6c, #3a3f7d);
+          width: 90%;
+          max-width: 600px;
+          border-radius: 20px;
+          padding: 2rem;
+          box-shadow: 0 5px 25px rgba(0, 0, 0, 0.5);
+          max-height: 90vh;
+          overflow-y: auto;
+        }
+        
+        .modal-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 20px;
+        }
+        
+        .close-modal {
+          font-size: 1.5rem;
+          cursor: pointer;
+          color: #fdbb2d;
+        }
+        
+        .form-group {
+          margin-bottom: 20px;
+        }
+        
+        .form-group label {
+          display: block;
+          margin-bottom: 8px;
+          color: #fdbb2d;
+        }
+        
+        .form-group input,
+        .form-group textarea {
+          width: 100%;
+          padding: 12px;
+          border-radius: 10px;
+          border: 2px solid #4e54c8;
+          background-color: rgba(0, 0, 0, 0.3);
+          color: white;
+        }
+        
+        .preview-container {
+          width: 100%;
+          height: 200px;
+          background-color: rgba(0, 0, 0, 0.3);
+          border-radius: 10px;
+          margin: 15px 0;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          overflow: hidden;
+        }
+        
+        .preview-container img,
+        .preview-container video {
+          max-width: 100%;
+          max-height: 100%;
+        }
+        
+        .generate-options {
+          display: flex;
+          justify-content: space-between;
+          margin-top: 20px;
+          gap: 10px;
+        }
+        
+        @media (max-width: 768px) {
+          .projects-grid {
+            grid-template-columns: 1fr;
+          }
+          
+          .admin-panel-header {
+            flex-direction: column;
+            gap: 15px;
+          }
+          
+          .generate-options {
+            flex-direction: column;
+          }
+        }
+      `}</style>
 
-        {showCreateModal && (
-          <div style={{
-            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex',
-            alignItems: 'center', justifyContent: 'center'
-          }}>
-            <form onSubmit={handleCreate} style={{
-              backgroundColor: 'white', padding: '2rem', borderRadius: '8px', width: '400px'
-            }}>
-              <h2>创建新项目</h2>
-              <input
-                type="text"
-                placeholder="项目名称"
-                value={formData.name}
-                onChange={(e) => setFormData({...formData, name: e.target.value})}
-                required
-                style={{ display: 'block', width: '100%', padding: '8px', margin: '10px 0', boxSizing: 'border-box' }}
-              />
-              <input
-                type="url"
-                placeholder="原始图片URL"
-                value={formData.originalImage}
-                onChange={(e) => setFormData({...formData, originalImage: e.target.value})}
-                required
-                style={{ display: 'block', width: '100%', padding: '8px', margin: '10px 0', boxSizing: 'border-box' }}
-              />
-              <input
-                type="url"
-                placeholder="视频URL"
-                value={formData.videoURL}
-                onChange={(e) => setFormData({...formData, videoURL: e.target.value})}
-                required
-                style={{ display: 'block', width: '100%', padding: '8px', margin: '10px 0', boxSizing: 'border-box' }}
-              />
-              <div>
-                <button type="submit" style={{ padding: '8px 16px', marginRight: '10px' }}>创建</button>
-                <button type="button" onClick={() => setShowCreateModal(false)} style={{ padding: '8px 16px' }}>
-                  取消
-                </button>
-              </div>
-            </form>
+      <div className="admin-container">
+        <div className="admin-header">
+          <h1><i className="fas fa-cube"></i> 项目管理后台</h1>
+          <button className="btn btn-danger" onClick={handleLogout}>
+            <i className="fas fa-sign-out-alt"></i> 退出登录
+          </button>
+        </div>
+
+        <div className="admin-content">
+          <div className="admin-panel-header">
+            <h2>项目管理</h2>
+            <button className="btn btn-primary" onClick={() => setShowCreateModal(true)}>
+              <i className="fas fa-plus"></i> 创建新项目
+            </button>
           </div>
-        )}
-      </main>
+          
+          {isLoading ? (
+            <p>加载中...</p>
+          ) : (
+            <div className="projects-grid">
+              {projects.length === 0 ? (
+                <p>暂无项目，请创建新项目</p>
+              ) : (
+                projects.map(project => (
+                  <div key={project._id} className="project-card">
+                    <h3>{project.name}</h3>
+                    <div className="project-image">
+                      {project.originalImage ? (
+                        <img src={project.originalImage} alt={project.name} />
+                      ) : (
+                        <i className="fas fa-image"></i>
+                      )}
+                    </div>
+                    <p>创建时间: {new Date(project.createdAt).toLocaleDateString()}</p>
+                    <p>状态: {project.status || '已发布'}</p>
+                    <div className="project-actions">
+                      <button className="btn btn-secondary" onClick={() => openEditModal(project)}>
+                        <i className="fas fa-edit"></i> 编辑
+                      </button>
+                      <button className="btn btn-danger" onClick={() => handleDelete(project._id)}>
+                        <i className="fas fa-trash"></i> 删除
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+
+          {showCreateModal && (
+            <div className="modal">
+              <div className="modal-content">
+                <div className="modal-header">
+                  <h2>创建新项目</h2>
+                  <span className="close-modal" onClick={() => setShowCreateModal(false)}>&times;</span>
+                </div>
+                <form onSubmit={handleCreate}>
+                  <div className="form-group">
+                    <label htmlFor="projectName">项目名称</label>
+                    <input
+                      type="text"
+                      id="projectName"
+                      placeholder="输入项目名称"
+                      value={formData.name}
+                      onChange={(e) => setFormData({...formData, name: e.target.value})}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="originalImage">原始图片URL</label>
+                    <input
+                      type="url"
+                      id="originalImage"
+                      placeholder="输入原始图片URL"
+                      value={formData.originalImage}
+                      onChange={(e) => setFormData({...formData, originalImage: e.target.value})}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="videoURL">视频URL</label>
+                    <input
+                      type="url"
+                      id="videoURL"
+                      placeholder="输入视频URL"
+                      value={formData.videoURL}
+                      onChange={(e) => setFormData({...formData, videoURL: e.target.value})}
+                      required
+                    />
+                  </div>
+                  <div className="generate-options">
+                    <button type="submit" className="btn btn-primary" style={{width: '100%'}}>
+                      <i className="fas fa-save"></i> 保存项目
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {showEditModal && (
+            <div className="modal">
+              <div className="modal-content">
+                <div className="modal-header">
+                  <h2>编辑项目</h2>
+                  <span className="close-modal" onClick={() => setShowEditModal(false)}>&times;</span>
+                </div>
+                <form onSubmit={handleUpdate}>
+                  <input type="hidden" value={editFormData.id} />
+                  <div className="form-group">
+                    <label htmlFor="editProjectName">项目名称</label>
+                    <input
+                      type="text"
+                      id="editProjectName"
+                      placeholder="输入项目名称"
+                      value={editFormData.name}
+                      onChange={(e) => setEditFormData({...editFormData, name: e.target.value})}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="editOriginalImage">原始图片URL</label>
+                    <input
+                      type="url"
+                      id="editOriginalImage"
+                      placeholder="输入原始图片URL"
+                      value={editFormData.originalImage}
+                      onChange={(e) => setEditFormData({...editFormData, originalImage: e.target.value})}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="editVideoURL">视频URL</label>
+                    <input
+                      type="url"
+                      id="editVideoURL"
+                      placeholder="输入视频URL"
+                      value={editFormData.videoURL}
+                      onChange={(e) => setEditFormData({...editFormData, videoURL: e.target.value})}
+                      required
+                    />
+                  </div>
+                  <div className="generate-options">
+                    <button type="button" className="btn btn-danger" onClick={() => handleDelete(editFormData.id)}>
+                      <i className="fas fa-trash"></i> 删除项目
+                    </button>
+                    <button type="submit" className="btn btn-primary">
+                      <i className="fas fa-save"></i> 更新项目
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
