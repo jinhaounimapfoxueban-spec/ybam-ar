@@ -25,7 +25,7 @@ export default async function handler(req, res) {
   
   try {
     const client = await clientPromise;
-    const db = client.db('ar-project');
+    const db = client.db('arproject');
 
     console.log('🔍 正在查询用户:', username);
     const user = await db.collection('users').findOne({ username });
