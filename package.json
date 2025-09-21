@@ -1,7 +1,19 @@
 {
+  "name": "ar-project-management",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
   "dependencies": {
-    "next": "^14.2.6",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "mongodb": "^6.9.0",
+    "next": "14.2.11",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@netlify/plugin-nextjs": "^5.0.0"
   }
 }
