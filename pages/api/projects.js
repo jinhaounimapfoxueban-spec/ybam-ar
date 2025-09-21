@@ -1,8 +1,6 @@
 import clientPromise from '../../lib/mongodb';
 import { ObjectId } from 'mongodb';
 import { verifyToken } from './auth';
-import { promises as fs } from 'fs';
-import path from 'path';
 
 export default async function handler(req, res) {
   // 设置 CORS 头
@@ -38,108 +36,71 @@ export default async function handler(req, res) {
       const projects = await db.collection('projects').find({}).sort({ createdAt: -1 }).toArray();
       res.status(200).json(projects);
     } 
-    else if (req.method === 'POST' || req.method === 'PUT') {
-      // 创建或更新项目 - 先上传文件到upload API
-      const uploadResponse = await fetch(`${getBaseUrl(req)}/api/upload`, {
-        method: 'POST',
-        headers: {
-          'Authorization': req.headers.authorization,
-          'Content-Type': req.headers['content-type']
-        },
-        body: req.body
-      });
+    else if (req.method === 'POST') {
+      // 创建新项目 - 使用URL而不是文件上传
+      const { name, originalImage, videoURL } = req.body;
       
-      if (!uploadResponse.ok) {
-        return res.status(uploadResponse.status).json({ message: '文件上传失败' });
+      if (!name || !originalImage || !videoURL) {
+        return res.status(400).json({ message: '请填写所有字段' });
       }
       
-      const uploadData = await uploadResponse.json();
+      const project = {
+        name,
+        originalImage,
+        videoURL,
+        status: '已发布',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        createdBy: decoded.userId
+      };
       
-      if (req.method === 'POST') {
-        // 创建新项目
-        const { name } = uploadData.fields;
-        
-        if (!name || !uploadData.files.originalImage || !uploadData.files.videoURL) {
-          return res.status(400).json({ message: '请填写所有字段并上传文件' });
-        }
-        
-        const project = {
-          name,
-          originalImage: uploadData.files.originalImage.url,
-          videoURL: uploadData.files.videoURL.url,
-          status: '已发布',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          createdBy: decoded.userId
-        };
-        
-        const result = await db.collection('projects').insertOne(project);
-        res.status(201).json({ ...project, _id: result.insertedId });
-        
-      } else if (req.method === 'PUT') {
-        // 更新项目
-        const { id, name } = uploadData.fields;
-        
-        if (!id || !name) {
-          return res.status(400).json({ message: '项目ID和名称不能为空' });
-        }
-        
-        const updateData = {
-          name,
-          updatedAt: new Date()
-        };
-        
-        // 如果有新文件，更新文件URL
-        if (uploadData.files.originalImage) {
-          updateData.originalImage = uploadData.files.originalImage.url;
-        }
-        if (uploadData.files.videoURL) {
-          updateData.videoURL = uploadData.files.videoURL.url;
-        }
-        
-        const result = await db.collection('projects').updateOne(
-          { _id: new ObjectId(id) },
-          { $set: updateData }
-        );
-        
-        if (result.matchedCount === 0) {
-          return res.status(404).json({ message: '项目未找到' });
-        }
-        
-        res.status(200).json({ message: '项目更新成功' });
+      const result = await db.collection('projects').insertOne(project);
+      res.status(201).json({ ...project, _id: result.insertedId });
+    }
+    else if (req.method === 'PUT') {
+      // 更新项目
+      const { id, name, originalImage, videoURL } = req.body;
+      
+      if (!id || !name) {
+        return res.status(400).json({ message: '项目ID和名称不能为空' });
       }
+      
+      const updateData = {
+        name,
+        updatedAt: new Date()
+      };
+      
+      if (originalImage) updateData.originalImage = originalImage;
+      if (videoURL) updateData.videoURL = videoURL;
+      
+      const result = await db.collection('projects').updateOne(
+        { _id: new ObjectId(id) },
+        { $set: updateData }
+      );
+      
+      if (result.matchedCount === 0) {
+        return res.status(404).json({ message: '项目未找到' });
+      }
+      
+      res.status(200).json({ message: '项目更新成功' });
     }
     else if (req.method === 'DELETE') {
       // 删除项目
-      let body = '';
-      req.on('data', chunk => {
-        body += chunk.toString();
+      const { id } = req.body;
+      
+      if (!id) {
+        return res.status(400).json({ message: '项目ID不能为空' });
+      }
+      
+      const result = await db.collection('projects').deleteOne({ 
+        _id: new ObjectId(id) 
       });
       
-      req.on('end', async () => {
-        try {
-          const { id } = JSON.parse(body);
-          
-          if (!id) {
-            return res.status(400).json({ message: '项目ID不能为空' });
-          }
-          
-          const result = await db.collection('projects').deleteOne({ 
-            _id: new ObjectId(id) 
-          });
-          
-          if (result.deletedCount === 0) {
-            return res.status(404).json({ message: '项目未找到' });
-          }
-          
-          res.status(200).json({ message: '项目删除成功' });
-        } catch (error) {
-          console.error('Delete error:', error);
-          res.status(500).json({ message: '服务器内部错误' });
-        }
-      });
+      if (result.deletedCount === 0) {
+        return res.status(404).json({ message: '项目未找到' });
+      }
       
-      return;
+      res.status(200).json({ message: '项目删除成功' });
     }
     else {
       res.status(405).json({ message: '方法不允许' });
@@ -149,15 +110,3 @@ export default async function handler(req, res) {
     res.status(500).json({ message: '服务器内部错误' });
   }
 }
-
-function getBaseUrl(req) {
-  const host = req.headers.host;
-  const protocol = req.headers['x-forwarded-proto'] || 'http';
-  return `${protocol}://${host}`;
-}
-
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
