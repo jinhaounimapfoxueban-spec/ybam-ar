@@ -1,6 +1,5 @@
-import { parseForm, getFileUrl } from '../../lib/fileUpload';
+import { promises as fs } from 'fs';
 import path from 'path';
-import fs from 'fs';
 
 export const config = {
   api: {
@@ -14,32 +13,78 @@ export default async function handler(req, res) {
   }
 
   try {
-    const uploadDir = path.join(process.cwd(), 'public/uploads');
+    const uploadDir = path.join(process.cwd(), 'public', 'uploads');
     
-    const { fields, files } = await parseForm(req, uploadDir);
-
-    if (!files.file) {
-      return res.status(400).json({ error: 'No file uploaded' });
+    // 确保上传目录存在
+    try {
+      await fs.access(uploadDir);
+    } catch {
+      await fs.mkdir(uploadDir, { recursive: true });
     }
 
-    const file = files.file;
-    const filename = `${Date.now()}-${file.originalFilename}`;
-    const newPath = path.join(uploadDir, filename);
-
-    // 重命名文件
-    fs.renameSync(file.filepath, newPath);
-
-    const fileUrl = getFileUrl(filename, req);
+    // 手动解析multipart/form-data
+    const chunks = [];
+    for await (const chunk of req) {
+      chunks.push(chunk);
+    }
+    
+    const buffer = Buffer.concat(chunks);
+    const boundary = req.headers['content-type'].split('boundary=')[1];
+    const parts = buffer.toString().split(`--${boundary}`);
+    
+    const files = {};
+    const fields = {};
+    
+    for (const part of parts) {
+      if (part.includes('filename=')) {
+        const filenameMatch = part.match(/filename="([^"]+)"/);
+        const nameMatch = part.match(/name="([^"]+)"/);
+        const contentTypeMatch = part.match(/Content-Type:\s*([^\r\n]+)/);
+        
+        if (filenameMatch && nameMatch) {
+          const filename = filenameMatch[1];
+          const fieldName = nameMatch[1];
+          const contentType = contentTypeMatch ? contentTypeMatch[1] : 'application/octet-stream';
+          
+          const fileStart = part.indexOf('\r\n\r\n') + 4;
+          const fileEnd = part.lastIndexOf('\r\n');
+          const fileData = part.substring(fileStart, fileEnd);
+          
+          const fileBuffer = Buffer.from(fileData);
+          const uniqueFilename = `${Date.now()}-${filename}`;
+          const filePath = path.join(uploadDir, uniqueFilename);
+          
+          await fs.writeFile(filePath, fileBuffer);
+          
+          files[fieldName] = {
+            filename: uniqueFilename,
+            originalFilename: filename,
+            contentType,
+            path: filePath,
+            url: `/uploads/${uniqueFilename}`
+          };
+        }
+      } else if (part.includes('name="')) {
+        const nameMatch = part.match(/name="([^"]+)"/);
+        if (nameMatch) {
+          const fieldName = nameMatch[1];
+          const valueStart = part.indexOf('\r\n\r\n') + 4;
+          const valueEnd = part.lastIndexOf('\r\n');
+          const value = part.substring(valueStart, valueEnd);
+          fields[fieldName] = value;
+        }
+      }
+    }
 
     res.status(200).json({
       success: true,
-      message: 'File uploaded successfully',
-      filename: filename,
-      url: fileUrl
+      message: '文件上传成功',
+      files,
+      fields
     });
 
   } catch (error) {
-    console.error('Upload error:', error);
-    res.status(500).json({ error: 'File upload failed' });
+    console.error('上传错误:', error);
+    res.status(500).json({ error: '文件上传失败' });
   }
 }
