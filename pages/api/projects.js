@@ -33,7 +33,7 @@ export default async function handler(req, res) {
     
     if (req.method === 'GET') {
       // 获取所有项目
-      const projects = await db.collection('projects').find({}).toArray();
+      const projects = await db.collection('projects').find({}).sort({ createdAt: -1 }).toArray();
       res.status(200).json(projects);
     } 
     else if (req.method === 'POST') {
@@ -48,12 +48,40 @@ export default async function handler(req, res) {
         name,
         originalImage: originalImage || '',
         videoURL,
+        status: '已发布',
         createdAt: new Date(),
+        updatedAt: new Date(),
         createdBy: decoded.userId
       };
       
       const result = await db.collection('projects').insertOne(project);
       res.status(201).json({ ...project, _id: result.insertedId });
+    }
+    else if (req.method === 'PUT') {
+      // 更新项目
+      const { id, name, originalImage, videoURL } = req.body;
+      
+      if (!id || !name || !videoURL) {
+        return res.status(400).json({ message: '项目ID、名称和视频URL不能为空' });
+      }
+      
+      const result = await db.collection('projects').updateOne(
+        { _id: new ObjectId(id) },
+        { 
+          $set: { 
+            name, 
+            originalImage, 
+            videoURL, 
+            updatedAt: new Date() 
+          } 
+        }
+      );
+      
+      if (result.matchedCount === 0) {
+        return res.status(404).json({ message: '项目未找到' });
+      }
+      
+      res.status(200).json({ message: '项目更新成功' });
     }
     else if (req.method === 'DELETE') {
       // 删除项目
